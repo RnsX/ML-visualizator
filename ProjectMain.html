@@ -6,17 +6,109 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Machine learning visualizer</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/5.0.0/math.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js" rel="script"></script>
 </head>
 <body>
-    <button onclick="nerualNetworkScore()">test</button>
+    <h2>Test results</h2>
+    <div id="cont"></div>
+    <hr/>
+    
+    <h2>Cost function (during iterations)</h2>
+    <div id="costFunct"></div>   
+    <hr/>
+    
+    <button onclick="nerualNetworkScore()">train model</button>
+    <button onclick="runTest()">runTest</button>
+    <button onclick="renderResults()">draw scored set</button>
+    <button onclick="renderCostFunction()">draw cost function</button>
 </body>
 </html>
 
+<!-- Drawing and graphing -->
+<script>
+    const renderCostFunction = () => {
+        var container = document.getElementById("costFunct");
+        var items = [];
+        let iterNum = 1;
+
+        storedCostFunction.forEach(costItem => {
+            items.push(
+                {
+                    x: iterNum, y: costItem
+                }
+            );
+            iterNum++;
+        });
+
+        var dataset = new vis.DataSet(items);
+        var options = {
+            start: 0,
+            end: iterations
+        };
+
+        var graph2d = new vis.Graph2d(container, dataset, options);
+    }
+
+    const renderResults = () => {
+        var predicted = [];
+
+        for (let i = 0; i < testResults.length; i++) {
+            predicted.push(
+                {
+                    x: x_test[i],
+                    y: y_test[i],
+                    group: storedResults[i] >= 0.3 ? "red" : "blue"
+                }
+            )            
+        };
+
+        console.log(predicted);
+
+        var container = document.getElementById("cont");
+        var dataset = new vis.DataSet(predicted);
+        var options = {
+            sort: false,
+            sampling: false,
+            style: 'points',
+            dataAxis: {
+                left: {
+                    range: {
+                        min:0, max:50
+                    }
+                }
+            },
+            drawPoints: {
+                enabled: true,
+                size: 6,
+                style: 'circle'
+            },
+            defaultGroup: 'Scatterplot',
+            height: '300px'
+        };
+
+        var garph2d = new vis.Graph2d(container, dataset, options);
+    }
+</script>
+
+
+<!-- Machine learning -->
 <script>
     let x = [];
     let y = [];
     let value = [];
-    // [{x, y, value},....]
+
+    let x_test = [];
+    let y_test = [];
+    let testResults = [];
+    
+    let storedResults = [];
+    let storedTheta = [];
+    let storedCostFunction = [];
+
+
+    let iterations = 300;
+    let alpha = 0.5;
 
     const nerualNetworkScore = () => {
         generateSampleData();
@@ -26,8 +118,6 @@
         let theta = [1,1];
         let dataM = math.matrix([x,y]);
 
-        let iterations = 300;
-        let alpha = 0.5;
         let costFunction = [];
         let iterationHistory = [];
 
@@ -86,15 +176,19 @@
             let history_result = activationFunct(thetaXdata);
             iterationHistory.push(history_result);
         }
+        
         let thetaXdata = math.multiply(math.transpose(theta), dataM); // theta' * X
         let final_results = activationFunct(thetaXdata);
-        console.log("final classifications: ", final_results);
-        console.log("cost function: ", costFunction);
-        console.log("iteration history: ", iterationHistory);
-        console.log(JSON.stringify(iterationHistory));
+        // console.log("final classifications: ", final_results);
+        // console.log("cost function: ", costFunction);
+        // console.log("iteration history: ", iterationHistory);
+        // console.log(JSON.stringify(iterationHistory));
+        console.log("done ml!");
+        storedResults = final_results;
+        storedTheta = theta;
+        storedCostFunction = costFunction;
+        alert("Training done!");
     }
-
-
 
     const activationFunct = (arrayInput) => {
         let output = [];
@@ -131,6 +225,29 @@
             value.push(0);
         }
     }
+
+    const runTest = () => {
+        generateTestData();
+        let dataM = math.matrix([x_test,y_test]);
+        let thetaXdata = math.multiply(math.transpose(storedTheta), dataM); // theta' * X
+        let final_results = activationFunct(thetaXdata);
+        testResults = final_results;
+        alert("Test scoring one!");
+    }
+
+    const generateTestData = () => {
+        for (let i = 0; i < 20; i++) {
+            x_test.push(getRandomInt(5,30));
+            y_test.push(getRandomInt(5,30));
+            value.push(1);
+        }
+        for (let i = 0; i < 20; i++) {
+            x_test.push(getRandomInt(25,45));
+            y_test.push(getRandomInt(30,50));
+            value.push(0);
+        }
+    }
+
     function getRandomInt(min, max) {
         min = Math.ceil(min);
         max = Math.floor(max);

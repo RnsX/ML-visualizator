@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Machine learning visualizer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/5.0.0/math.js"></script>
+</head>
+<body>
+    <button onclick="nerualNetworkScore()">test</button>
+</body>
+</html>
+
+<script>
+    let x = [];
+    let y = [];
+    let value = [];
+    // [{x, y, value},....]
+
+    const nerualNetworkScore = () => {
+        generateSampleData();
+
+        x = normalizeMaxMin(x);
+        y = normalizeMaxMin(y);
+        let theta = [1,1];
+        let dataM = math.matrix([x,y]);
+
+        let iterations = 300;
+        let alpha = 0.5;
+        let costFunction = [];
+        let iterationHistory = [];
+
+
+        for (let idx = 0; idx < iterations; idx++) {
+
+            let thetaX = math.multiply(math.transpose(theta), dataM); // theta' * X
+            let h = activationFunct(thetaX);
+
+            let result_one = math.multiply(
+                dataM,
+                math.subtract(h,value)
+            );
+
+            theta = math.subtract(
+                theta,
+                (
+                    math.multiply(
+                        (alpha/(x.length)),
+                        result_one
+                    )
+                )
+            );
+            
+            let cost_one = math.multiply(
+                math.transpose(math.multiply(-1, value)),
+                math.log(h)
+            );
+
+            let cost_two = math.multiply
+            (
+                math.transpose(
+                    math.subtract(
+                        1,
+                        math.multiply(-1,value)
+                    )
+                ),
+                math.log(math.subtract(1,h))
+            );
+
+            costFunction.push(
+                math.multiply(
+                    math.divide(
+                        1,
+                        x.length
+                    ),
+                    math.subtract(
+                        cost_one,
+                        cost_two
+                    ),
+                )-1
+            );
+            
+
+            let thetaXdata = math.multiply(math.transpose(theta), dataM); // theta' * X
+            let history_result = activationFunct(thetaXdata);
+            iterationHistory.push(history_result);
+        }
+        let thetaXdata = math.multiply(math.transpose(theta), dataM); // theta' * X
+        let final_results = activationFunct(thetaXdata);
+        console.log("final classifications: ", final_results);
+        console.log("cost function: ", costFunction);
+        console.log("iteration history: ", iterationHistory);
+        console.log(JSON.stringify(iterationHistory));
+    }
+
+
+
+    const activationFunct = (arrayInput) => {
+        let output = [];
+        arrayInput.forEach(x => {
+            output.push((1)/(1+(math.exp(-x))));
+        });
+        return output;
+    }
+    const normalizeMaxMin = (inputArray) => {
+        let max = Math.max(...inputArray);
+        let min = Math.min(...inputArray);
+        let outputArray = [];
+
+        inputArray.forEach(item => {
+            outputArray.push(((item - min) / (max - min)));
+        });
+
+        return outputArray;   
+    }
+    const dotProduct = (a, b) => 
+    {
+        let output = a.map((x, i) => a[i] * b[i]).reduce((m, n) => m + n);
+        return output;
+    }
+    const generateSampleData = () => {
+        for (let i = 0; i < 20; i++) {
+            x.push(getRandomInt(5,20));
+            y.push(getRandomInt(5,20));
+            value.push(1);
+        }
+        for (let i = 0; i < 20; i++) {
+            x.push(getRandomInt(35,45));
+            y.push(getRandomInt(40,50));
+            value.push(0);
+        }
+    }
+    function getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+</script>

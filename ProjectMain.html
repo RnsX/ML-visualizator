@@ -44,7 +44,9 @@
         var dataset = new vis.DataSet(items);
         var options = {
             start: 0,
-            end: iterations
+            end: iterations,
+            height: '300px',
+            width: '300px'
         };
 
         var graph2d = new vis.Graph2d(container, dataset, options);
@@ -58,7 +60,7 @@
                 {
                     x: x_test[i],
                     y: y_test[i],
-                    group: storedResults[i] >= 0.3 ? "red" : "blue"
+                    group: testResults[i] >= 0.3 ? "red" : "blue"
                 }
             )            
         };
@@ -71,20 +73,14 @@
             sort: false,
             sampling: false,
             style: 'points',
-            dataAxis: {
-                left: {
-                    range: {
-                        min:0, max:50
-                    }
-                }
-            },
             drawPoints: {
                 enabled: true,
                 size: 6,
                 style: 'circle'
             },
             defaultGroup: 'Scatterplot',
-            height: '300px'
+            height: '300px',
+            width: '400px'
         };
 
         var garph2d = new vis.Graph2d(container, dataset, options);
@@ -97,6 +93,7 @@
     let x = [];
     let y = [];
     let value = [];
+    let value_test = [];
 
     let x_test = [];
     let y_test = [];
@@ -168,7 +165,7 @@
                         cost_one,
                         cost_two
                     ),
-                )-1
+                )
             );
             
 
@@ -228,23 +225,29 @@
 
     const runTest = () => {
         generateTestData();
-        let dataM = math.matrix([x_test,y_test]);
+        let x_test_norm = normalizeMaxMin(x_test);
+        let y_test_norm = normalizeMaxMin(y_test);
+        let dataM = math.matrix([x_test_norm,y_test_norm]);
         let thetaXdata = math.multiply(math.transpose(storedTheta), dataM); // theta' * X
         let final_results = activationFunct(thetaXdata);
         testResults = final_results;
+
         alert("Test scoring one!");
+        console.log("expected: ", value_test);
+        console.log("actual: ", testResults);
+
     }
 
     const generateTestData = () => {
         for (let i = 0; i < 20; i++) {
             x_test.push(getRandomInt(5,30));
             y_test.push(getRandomInt(5,30));
-            value.push(1);
+            value_test.push(1);
         }
         for (let i = 0; i < 20; i++) {
             x_test.push(getRandomInt(25,45));
             y_test.push(getRandomInt(30,50));
-            value.push(0);
+            value_test.push(0);
         }
     }
 

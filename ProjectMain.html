@@ -10,6 +10,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js" rel="script"></script>
 </head>
 <body>
+    <h2>Actual results</h2>
+    <div id="actualFunct"></div>
+    <hr/>
+
     <h2>Test results</h2>
     <div id="cont"></div>
     <hr/>
@@ -27,6 +31,37 @@
 
 <!-- Drawing and graphing -->
 <script>
+    const renderActual = () => {
+        var predicted = [];
+
+        for (let i = 0; i < testResults.length; i++) {
+            predicted.push(
+                {
+                    x: x_test[i],
+                    y: y_test[i],
+                    group: value_test[i] >= 1 ? "red" : "blue"
+                }
+            )            
+        };
+        var container = document.getElementById("actualFunct");
+        var dataset = new vis.DataSet(predicted);
+        var options = {
+            sort: false,
+            sampling: false,
+            style: 'points',
+            drawPoints: {
+                enabled: true,
+                size: 6,
+                style: 'circle'
+            },
+            defaultGroup: 'Scatterplot',
+            height: '300px',
+            width: '400px'
+        };
+
+        var garph2d = new vis.Graph2d(container, dataset, options);
+    }
+
     const renderCostFunction = () => {
         var container = document.getElementById("costFunct");
         var items = [];
@@ -53,6 +88,8 @@
     }
 
     const renderResults = () => {
+        renderActual();
+
         var predicted = [];
 
         for (let i = 0; i < testResults.length; i++) {
@@ -60,7 +97,7 @@
                 {
                     x: x_test[i],
                     y: y_test[i],
-                    group: testResults[i] >= 0.3 ? "red" : "blue"
+                    group: testResults[i] >= 0.7 ? "red" : "blue"
                 }
             )            
         };
@@ -104,16 +141,22 @@
     let storedCostFunction = [];
 
 
-    let iterations = 300;
-    let alpha = 0.5;
+    let iterations = 1500;
+    let alpha = 0.01;
 
     const nerualNetworkScore = () => {
         generateSampleData();
 
         x = normalizeMaxMin(x);
         y = normalizeMaxMin(y);
-        let theta = [1,1];
-        let dataM = math.matrix([x,y]);
+        x_quad = normalizeMaxMin(math.cos(x));
+        y_quad = normalizeMaxMin(math.sin(y));
+        x_sq = normalizeMaxMin(math.square(x));
+        y_sq = normalizeMaxMin(math.square(y));
+        x_bias = math.add(math.multiply(x,0),1);
+
+        let theta = [1,1,1,1,1,1,1];
+        let dataM = math.matrix([x_bias,x,y,x_quad,y_quad,x_sq, y_sq]);
 
         let costFunction = [];
         let iterationHistory = [];
@@ -178,7 +221,7 @@
         let final_results = activationFunct(thetaXdata);
         // console.log("final classifications: ", final_results);
         // console.log("cost function: ", costFunction);
-        // console.log("iteration history: ", iterationHistory);
+        console.log("iteration history: ", iterationHistory);
         // console.log(JSON.stringify(iterationHistory));
         console.log("done ml!");
         storedResults = final_results;
@@ -211,23 +254,45 @@
         return output;
     }
     const generateSampleData = () => {
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 200; i++) {
             x.push(getRandomInt(5,20));
             y.push(getRandomInt(5,20));
-            value.push(1);
-        }
-        for (let i = 0; i < 20; i++) {
-            x.push(getRandomInt(35,45));
-            y.push(getRandomInt(40,50));
             value.push(0);
         }
+        for (let i = 0; i < 200; i++) {
+            x.push(getRandomInt(35,45));
+            y.push(getRandomInt(40,50));
+            value.push(1);
+        }
+        
+    }
+
+    const generateTestData = () => {
+        for (let i = 0; i < 200; i++) {
+            x_test.push(getRandomInt(5,30));
+            y_test.push(getRandomInt(5,30));
+            value_test.push(0);
+        }
+        for (let i = 0; i < 200; i++) {
+            x_test.push(getRandomInt(25,45));
+            y_test.push(getRandomInt(30,50));
+            value_test.push(1);
+        }
+        
     }
 
     const runTest = () => {
         generateTestData();
+        let x_bias = math.add(math.multiply(x_test,0),1);
+        let x_quad = normalizeMaxMin(math.cos(x_test));
+        let y_quad = normalizeMaxMin(math.sin(y_test));
+        let x_sq = normalizeMaxMin(math.square(x_test));
+        let y_sq = normalizeMaxMin(math.square(y_test));
+        
         let x_test_norm = normalizeMaxMin(x_test);
         let y_test_norm = normalizeMaxMin(y_test);
-        let dataM = math.matrix([x_test_norm,y_test_norm]);
+
+        let dataM = math.matrix([x_bias,x_test_norm,y_test_norm,x_quad, y_quad, x_sq, y_sq]);
         let thetaXdata = math.multiply(math.transpose(storedTheta), dataM); // theta' * X
         let final_results = activationFunct(thetaXdata);
         testResults = final_results;
@@ -238,18 +303,7 @@
 
     }
 
-    const generateTestData = () => {
-        for (let i = 0; i < 20; i++) {
-            x_test.push(getRandomInt(5,30));
-            y_test.push(getRandomInt(5,30));
-            value_test.push(1);
-        }
-        for (let i = 0; i < 20; i++) {
-            x_test.push(getRandomInt(25,45));
-            y_test.push(getRandomInt(30,50));
-            value_test.push(0);
-        }
-    }
+    
 
     function getRandomInt(min, max) {
         min = Math.ceil(min);
